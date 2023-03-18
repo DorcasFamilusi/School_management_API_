@@ -1,6 +1,5 @@
-from ..utils import db
 from ..models.user import User
-
+from ..utils import db
 
 
 class Admin(User):
@@ -9,10 +8,9 @@ class Admin(User):
     id = db.Column(db.Integer(), db.ForeignKey('users.id'), primary_key=True)
     designation = db.Column(db.String(300))
 
-    __mapper_args__ ={
+    __mapper_args__ = {
         'polymorphic_identity': 'admin'
     }
-  
 
     def save(self):
         db.session.add(self)

@@ -1,7 +1,8 @@
-from ..utils import db
 from datetime import datetime
-from ..models.student import Student
+
 from ..models.course import Course
+from ..models.student import Student
+from ..utils import db
 
 
 class StudentCourse(db.Model):
@@ -23,7 +24,7 @@ class StudentCourse(db.Model):
     @classmethod
     def get_by_id(cls, id):
         return cls.query.get_or_404(id)
-    
+
     @classmethod
     def get_students_in_course_by(cls, course_id):
         students = (
@@ -39,5 +40,3 @@ class StudentCourse(db.Model):
             .join(Student).filter(Student.id == student_id).all()
         )
         return courses
-    
-        

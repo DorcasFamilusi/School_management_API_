@@ -1,24 +1,21 @@
 from flask import Flask
-from flask_restx import Api
+from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
-from .auth.views import auth_namespace
-from .utils import db
-from .Students.views import students_ns
-from .portal.views.courses import courses_namespace
-from flask_jwt_extended import JWTManager
-from .models.student import Student
-from .models.lecturer import Lecturer
-from .models.course import Course
-from .models.score import Score
-from .models.studentCourse import StudentCourse
-from .models.user import User
-from .models.admin import Admin
-from .config.config import config_dict
-from pathlib import Path 
-from flask_jwt_extended import JWTManager
+from flask_restx import Api
 from werkzeug.exceptions import NotFound, MethodNotAllowed
 
-
+from api.auth.views import auth_namespace
+from .Students.views import students_ns
+from .config.config import config_dict
+from .models.admin import Admin
+from .models.course import Course
+from .models.lecturer import Lecturer
+from .models.score import Score
+from .models.student import Student
+from .models.studentCourse import StudentCourse
+from .models.user import User
+from .portal.views.courses import courses_namespace
+from .utils import db
 
 
 def create_app(config=config_dict['dev']):
@@ -41,16 +38,15 @@ def create_app(config=config_dict['dev']):
     }
 
     api = Api(
-        app, 
-        version='1.0', 
-        title='Student REST API', 
+        app,
+        version='1.0',
+        title='Student REST API',
         description='A student management API',
         authorizations=authorizations,
         security='Bearer Auth'
 
-        )
-        
-    
+    )
+
     api.add_namespace(auth_namespace, path='/auth')
     api.add_namespace(students_ns, path='/students')
     api.add_namespace(courses_namespace, path='/courses')
@@ -77,8 +73,7 @@ def create_app(config=config_dict['dev']):
         }
 
     return app
- 
 
-#app.config['JWT_SECRET_KEY'] = 'super-secret'  # Change this to a secure key in production
+# app.config['JWT_SECRET_KEY'] = 'super-secret'  # Change this to a secure key in production
 # set FLASK_APP=api/
 # echo $FLASK_APPapi/
