@@ -1,5 +1,6 @@
-from ..utils import db
 from datetime import datetime
+
+from ..utils import db
 
 
 class Course(db.Model):
@@ -9,7 +10,7 @@ class Course(db.Model):
     name = db.Column(db.String(100))
     course_code = db.Column(db.String(10), unique=True)
     course_title = db.Column(db.String(70), unique=True)
-    course_hours = db.Column(db.Integer(), default= 1)
+    course_hours = db.Column(db.Integer(), default=1)
     teacher_id = db.Column(db.Integer(), db.ForeignKey('lecturer.id'))
     created_at = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
 
@@ -24,4 +25,3 @@ class Course(db.Model):
     @classmethod
     def get_by_id(cls, id):
         return cls.query.get_or_404(id)
-    

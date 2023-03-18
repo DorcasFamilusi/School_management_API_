@@ -1,29 +1,28 @@
-from flask_restx import Namespace, Resource, fields
+import asyncio
+import datetime
+from http import HTTPStatus
+
 from flask import request
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+from flask_restx import Namespace, Resource, fields
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from ..models.admin import Admin
+from ..models.lecturer import Lecturer
+from ..models.student import Student
 from ..models.user import User
 from ..utils import db, random_char, generate_reset_token, EmailService
-from werkzeug.security import generate_password_hash, check_password_hash
-from http import HTTPStatus
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
-import datetime
-import asyncio
-from ..models.admin import Admin
-from ..models.student import Student
-from ..models.lecturer import Lecturer
-
-
-
 
 auth_namespace = Namespace('auth', description='name space for authentication')
 
 password_reset_request = auth_namespace.model(
-    'Password_reset_request',{
+    'Password_reset_request', {
         'email': fields.String(required=True, description='User email address')
     }
 )
 
 password_reset_fields = auth_namespace.model(
-    'Password_reset',{
+    'Password_reset', {
         'token': fields.String(required=True, description="Password reset token"),
         'password1': fields.String(required=True, description="Password"),
         'password2': fields.String(required=True, description="Confirm password")
@@ -39,7 +38,6 @@ signup_model = auth_namespace.model(
     }
 )
 
-
 login_model = auth_namespace.model(
     'Login', {
         'email': fields.String(required=True, description="An email"),
@@ -49,11 +47,11 @@ login_model = auth_namespace.model(
 
 
 @auth_namespace.route('/signup')
-class SignUp(Resource):  
-    
+class SignUp(Resource):
+
     @auth_namespace.expect(signup_model)
     @auth_namespace.doc(
-        description = '''
+        description='''
 This is used to create an account based on the user type
         '''
     )
@@ -64,49 +62,49 @@ This is used to create an account based on the user type
         data = request.get_json()
         user = User.query.filter_by(email=data.get('email', None)).first()
         if user:
-            return {'message': 'User already exists'} , HTTPStatus.CONFLICT
+            return {'message': 'User already exists'}, HTTPStatus.CONFLICT
         # Create new user
-        identifier=random_char(20)  
-        current_year =  str(datetime.datetime.now().year)
-        #using the match and case method
+        identifier = random_char(20)
+        current_year = str(datetime.datetime.now().year)
+        # using the match and case method
         match data.get('user_type'):
             case 'student':
-                admission= 'student@' + random_char(10) + current_year
-                new_user =  Student(
-                    email=data.get('email'), 
+                admission = 'student@' + random_char(10) + current_year
+                new_user = Student(
+                    email=data.get('email'),
                     first_name=data.get('first_name'),
                     last_name=data.get('last_name'),
-                    user_type = 'student',
+                    user_type='student',
                     identifier=identifier,
-                    password_hash = generate_password_hash(data.get('password')),
+                    password_hash=generate_password_hash(data.get('password')),
                     admission_no=admission
-                    )
-                
+                )
+
             case 'lecturer':
-                employee= 'lecturer@' + random_char(10) + current_year
+                employee = 'lecturer@' + random_char(10) + current_year
                 new_user = Lecturer(
-                    email=data.get('email'), 
+                    email=data.get('email'),
                     identifier=identifier,
                     first_name=data.get('first_name'),
                     last_name=data.get('last_name'),
-                    user_type = 'lecturer',
-                    password_hash = generate_password_hash(data.get('password')),
+                    user_type='lecturer',
+                    password_hash=generate_password_hash(data.get('password')),
                     employee_no=employee
-                    )
+                )
             case 'admin':
-                designation= 'administrator'
+                designation = 'administrator'
                 new_user = Admin(
-                    email=data.get('email'), 
+                    email=data.get('email'),
                     identifier=identifier,
                     first_name=data.get('first_name'),
                     last_name=data.get('last_name'),
-                    user_type = 'admin',
-                    password_hash = generate_password_hash(data.get('password')),
+                    user_type='admin',
+                    password_hash=generate_password_hash(data.get('password')),
                     designation=designation
-                    )
-            case _ :
+                )
+            case _:
                 response = {'message': 'Invalid user type'}
-                return response , HTTPStatus.BAD_REQUEST
+                return response, HTTPStatus.BAD_REQUEST
         try:
             new_user.save()
         except:
@@ -115,8 +113,7 @@ This is used to create an account based on the user type
         return {'message': 'User registered successfully as a {}'.format(new_user.user_type)}, HTTPStatus.CREATED
 
 
-                
-# Route to refresh Token 
+# Route to refresh Token
 @auth_namespace.route('/refresh')
 class Refresh(Resource):
     @auth_namespace.doc(
@@ -135,10 +132,10 @@ class Refresh(Resource):
         refresh_token = create_refresh_token(identity=username)
 
         return {
-            'access_token': access_token,
-            'refresh_token': refresh_token,
+                   'access_token': access_token,
+                   'refresh_token': refresh_token,
 
-            }, HTTPStatus.OK
+               }, HTTPStatus.OK
 
 
 # Route for user to login 
@@ -162,10 +159,9 @@ class UserLoginView(Resource):
         refresh_token = create_refresh_token(identity=user.id)
         response = {
             'access_token': access_token,
-            'refresh_token': refresh_token, 
-            }
+            'refresh_token': refresh_token,
+        }
         return response, HTTPStatus.OK
-
 
 
 # Route for requesting to reset password
@@ -190,8 +186,8 @@ class PasswordResetRequestView(Resource):
             mail = asyncio.create_task(EmailService.forget_password_mail(user.email, token))
 
         return {
-            'message': 'An email has been sent with instructions to reset your password.'
-            }, HTTPStatus.OK
+                   'message': 'An email has been sent with instructions to reset your password.'
+               }, HTTPStatus.OK
 
 
 # Resetting password route
@@ -209,21 +205,18 @@ class PasswordResetView(Resource):
         user = User.query.filter_by(password_reset_token=token).first()
         if not user:
             return {
-                'message': 'Invalid or expired token. Please do try again.'
-                }, HTTPStatus.BAD_REQUEST
+                       'message': 'Invalid or expired token. Please do try again.'
+                   }, HTTPStatus.BAD_REQUEST
         password1 = request.json.get('password1')
         password2 = request.json.get('password2')
-        if password1 == password2  :
+        if password1 == password2:
             user.set_password(password2)
             user.password_reset_token = None
             db.session.commit()
             return {
-                'message': 'Your password has been reset.'
-                }, HTTPStatus.OK
-        
+                       'message': 'Your password has been reset.'
+                   }, HTTPStatus.OK
+
         return {
-                'message': 'Password does not match.'
-                }, HTTPStatus.UNAUTHORIZED
-
-
-
+                   'message': 'Password does not match.'
+               }, HTTPStatus.UNAUTHORIZED

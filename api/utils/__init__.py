@@ -1,14 +1,16 @@
-from flask_sqlalchemy import SQLAlchemy
-import string
-import secrets
 import os
-import smtplib, ssl
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import secrets
 # import environ
 import smtplib
+import ssl
+import string
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
+
 
 def generate_reset_token(length):
     """ This is to generate a password reset token 
@@ -41,9 +43,9 @@ def get_grade(score):
     elif score < 49 and score > 45:
         return 'D'
     elif score < 44 and score > 40:
-        return 'E'    
-    elif score < 40 :
-        return 'F'   
+        return 'E'
+    elif score < 40:
+        return 'F'
     else:
         return 'F'
 
@@ -65,7 +67,7 @@ def convert_grade_to_gpa(grade):
 
 
 class EmailService():
-    def forget_password_mail(receiver_email , token ):
+    def forget_password_mail(receiver_email, token):
         """
         This is to send a forget password mail instruction to user
         """
